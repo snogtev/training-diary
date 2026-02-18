@@ -9,6 +9,17 @@ class MyTabView(ctk.CTkTabview):
         self.add('Настройки')
         self.add('Помощь')
 
+        self.label = ctk.CTkLabel(self)
+
+        def add_traning():
+            self.label.grid(row=0, column=0)
+
+
+        self.button = ctk.CTkButton(master=self.tab('Тренировки'),text='Добавить тренировку',command=add_traning).grid(row=2, column=0)
+        self.button = ctk.CTkButton(master=self.tab('Тренировки'),text='Мои тренировки').grid(row=2, column=2)
+        self.button = ctk.CTkButton(master=self.tab('Тренировки'),text='Мои цели').grid(row=2, column=3)
+
+
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -18,4 +29,5 @@ class App(ctk.CTk):
 
 app = App()
 app.title('Дневник тренировок')
+ctk.set_appearance_mode('Dark')
 app.mainloop()
