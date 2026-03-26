@@ -1,19 +1,20 @@
 import customtkinter as ctk
 from CTkTable import *
 from CTkDatePicker import CTkDatePicker
+from ctkspinbox import CTkSpinbox
 
 
 ctk.FontManager.load_font('Russo One.ttf') #Добавление шрифта
 
 class MainMenu(ctk.CTkFrame):
-    def __init__(self, master, new_frame, **kwargs,):
+    def __init__(self, new_frame, **kwargs,):
         tabs = ('Тренировки',
                 'Статистика',
                 'Профиль',
                 'Настройки',
                 'Помощь')
         
-        super().__init__(master, **kwargs)
+        super().__init__(**kwargs)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.tabview = ctk.CTkTabview(self, width=700, height=550)
@@ -39,11 +40,19 @@ class AddTraining(ctk.CTkFrame):
         self.setup_ui()
         self.create_calendar()
         self.create_table()
+    
+    def add_exercise(self):
+        dd = ctk.CTkToplevel()
+        dd.title('Упражнение')
+        dd.geometry('250x200')
+        self.spinbox = CTkSpinbox(dd, step_value=2.5, font=('Russo One', 25))
+        self.spinbox.grid() 
+        dd.resizable(False, False)
 
     def setup_ui(self):
         ctk.CTkLabel(self, text='Дата:', font=('Russo One', 25)).grid(row=0, column=0)
         ctk.CTkButton(self, text='Назад', command=self.new_fragme, font=('Russo One', 25)).grid(row=2, column=0, pady=10)
-        ctk.CTkButton(self, text='Добавить упражнение', font=('Russo One', 25)).grid(row=6, column=0, pady=10)
+        ctk.CTkButton(self, text='Добавить упражнение', command=self.add_exercise, font=('Russo One', 25)).grid(row=6, column=0, pady=10)
         ctk.CTkButton(self, text='Сохранить', font=('Russo One', 25)).grid(row=10, column=0, pady=10)
 
     def create_calendar(self):
@@ -54,9 +63,6 @@ class AddTraining(ctk.CTkFrame):
     def create_table(self):
         self.table = CTkTable(self, row=2, font=('Russo One', 25), header_color = '#1f538d', values=[self.columns])
         self.table.grid()
-
-
-
 
 
 class App(ctk.CTk):
