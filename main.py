@@ -47,7 +47,6 @@ class AddTraining(ctk.CTkFrame):
         dd.geometry('250x200')
         self.spinbox = CTkSpinbox(dd, step_value=2.5, font=('Russo One', 25))
         self.spinbox.grid() 
-        dd.resizable(False, False)
 
     def setup_ui(self):
         ctk.CTkLabel(self, text='Дата:', font=('Russo One', 25)).grid(row=0, column=0)

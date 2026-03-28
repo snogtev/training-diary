@@ -77,6 +77,14 @@ class CTkSpinbox(ctk.CTkFrame):
                                     font = self.font, validate="key", validatecommand=vcmd,
                                     text_color = self.text_color)
         self.counter.insert(0, self.counter_var)
+        self.counter.grid()
+        self.counter.bind('<ButtonRelease-1>', lambda e: 
+                          self.counter.icursor(len(self.counter.get()) - 3) 
+                          if self.counter.index("insert") > len(self.counter.get()) - 3 
+                          else None
+        )
+
+
 
 
         # decrement button
