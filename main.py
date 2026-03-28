@@ -1,10 +1,15 @@
 import customtkinter as ctk
-from CTkTable import *
+from CTkTable import CTkTable
 from CTkDatePicker import CTkDatePicker
 from ctkspinbox import CTkSpinbox
 
 
-ctk.FontManager.load_font('Russo One.ttf') #Добавление шрифта
+ctk.FontManager.load_font('Russo One.ttf')
+
+FONT_LARGE = ('Russo One', 25)
+FONT_MEDIUM = ('Russo One', 22)
+FONT_SMALL = ('Russo One', 18)
+
 
 class MainMenu(ctk.CTkFrame):
     def __init__(self, new_frame, **kwargs,):
@@ -13,19 +18,23 @@ class MainMenu(ctk.CTkFrame):
                 'Профиль',
                 'Настройки',
                 'Помощь')
+        buttons = [{'text': 'Добавить тренировку', 'command': new_frame},
+                   {'text': 'Мои тренировки'},
+                   {'text': 'Мои цели'}]
+        
         
         super().__init__(**kwargs)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.tabview = ctk.CTkTabview(self, width=700, height=550)
         self.tabview.grid(row=0, column=0, padx=20, pady=20)
-        for tab in tabs: #Создание вкладок
+        for tab in tabs:
             self.tabview.add(tab)
+        self.tabview._segmented_button.configure(font=FONT_MEDIUM)
+
         self.tabview.tab('Тренировки').grid_columnconfigure(0, weight=1)
-        self.tabview._segmented_button.configure(font=('Russo One', 22))
-        ctk.CTkButton(self.tabview.tab('Тренировки'),text='Добавить тренировку',command=new_frame, font=('Russo One', 25)).grid(row=2, column=0, pady=20, ipady=5)
-        ctk.CTkButton(self.tabview.tab('Тренировки'),text='Мои тренировки', font=('Russo One', 25)).grid(row=4, column=0, pady=20, ipady=5)
-        ctk.CTkButton(self.tabview.tab('Тренировки'),text='Мои цели', font=('Russo One', 25)).grid(row=46, column=0, pady=20, ipady=5)
+        for btn_data in buttons:
+            ctk.CTkButton(self.tabview.tab('Тренировки'), **btn_data, font=FONT_LARGE).grid()
 
 
 class AddTraining(ctk.CTkFrame):
@@ -45,8 +54,10 @@ class AddTraining(ctk.CTkFrame):
         dd = ctk.CTkToplevel()
         dd.title('Упражнение')
         dd.geometry('250x200')
-        self.spinbox = CTkSpinbox(dd, step_value=2.5, font=('Russo One', 25))
-        self.spinbox.grid() 
+        self.spinbox = CTkSpinbox(dd, step_value=2.5, font=('Russo One', 25)).grid()
+        ctk.CTkLabel(dd, text='Вес:', font=('Russo One', 25)).grid()
+        ctk.CTkLabel(dd, text='Подходы:', font=('Russo One', 25)).grid()
+        ctk.CTkLabel(dd, text='Повторения:', font=('Russo One', 25)).grid()
 
     def setup_ui(self):
         ctk.CTkLabel(self, text='Дата:', font=('Russo One', 25)).grid(row=0, column=0)
@@ -86,6 +97,6 @@ class App(ctk.CTk):
 app = App()
 app.title('Дневник тренировок')
 app.geometry('800x600')
-ctk.set_appearance_mode ('Dark')
+ctk.set_appearance_mode('Dark')
 app.resizable(False, False)
 app.mainloop()
