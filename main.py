@@ -9,22 +9,19 @@ FONT_LARGE = ('Russo One', 25)
 FONT_MEDIUM = ('Russo One', 22)
 FONT_SMALL = ('Russo One', 18)
 
+WEIGHT_STEP = 2.5
+
 
 class MainMenu(ctk.CTkFrame):
-    def __init__(self, master, navigate, **kwargs,):
-        self.tabs = ('Тренировки',
-                'Статистика',
-                'Профиль',
-                'Настройки',
-                'Помощь')
-        
-        self.buttons = [
-                   {'text': 'Добавить тренировку', 'command': lambda: navigate('add')},
-                   {'text': 'Мои тренировки'},
-                   {'text': 'Мои цели'}
-]
-        
+    def __init__(self, master, navigate, **kwargs):
         super().__init__(master, **kwargs)
+        
+        self.tabs = ('Тренировки', 'Статистика', 'Профиль', 'Настройки', 'Помощь')
+        
+        self.buttons = [{'text': 'Добавить тренировку', 'command': lambda: navigate('add')},
+                        {'text': 'Мои тренировки'},
+                        {'text': 'Мои цели'}]
+        
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.tabview = ctk.CTkTabview(self, width=700, height=550)
@@ -42,34 +39,34 @@ class MainMenu(ctk.CTkFrame):
 class AddTraining(ctk.CTkFrame):
     def __init__(self, master, navigate, **kwargs):
         super().__init__(master, **kwargs)
+        self.training_form = None
 
-        self.columns = ('Упражнение',
-                        'Вес',
-                        'Подходы',
-                        'Повторения')
-        self.buttons = [
-                   {'text': 'Добавить упражнение', 'command': self.add_exercise},
-                   {'text': 'Назад', 'command': lambda: navigate('menu')},
-                   {'text': 'Сохранить'}
-]
+        self.columns = ('Упражнение', 'Вес', 'Подходы', 'Повторения')
+        
+        self.buttons = [{'text': 'Добавить упражнение', 'command': self.add_exercise},
+                        {'text': 'Назад', 'command': lambda: navigate('menu')},
+                        {'text': 'Сохранить'}]
+        
         self.setup_ui()
         self.create_calendar()
         self.create_table()
     
     def add_exercise(self):
-        TrainingForm = ctk.CTkToplevel()
-        TrainingForm.title('Упражнение')
-        TrainingForm.geometry('250x200')
-        self.spinbox = CTkSpinbox(TrainingForm, step_value=2.5, font=('Russo One', 25))
-        self.spinbox.grid()
-        for buttons in self.columns:
-            ctk.CTkLabel(TrainingForm, text=buttons, font=FONT_LARGE).grid()
+        if self.training_form is None:
+            self.training_form = ctk.CTkToplevel()
+            self.training_form.title('Упражнение')
+            self.training_form.geometry('250x200')
+            self.spinbox = CTkSpinbox(self.training_form, step_value=WEIGHT_STEP, font=FONT_LARGE)
+            self.spinbox.grid()
+            self.training_form.wm_attributes("-topmost", 1)
+            for buttons in self.columns:
+                ctk.CTkLabel(self.training_form, text=buttons + ':', font=FONT_LARGE).grid()
 
 
     def setup_ui(self):
         for i, btn_data in enumerate(self.buttons, start=1):
             ctk.CTkButton(self, **btn_data, font=FONT_LARGE).grid(row=i, pady=15)
-        ctk.CTkLabel(self, text='Дата:', font=('Russo One', 25)).grid(row=0, column=0)
+        ctk.CTkLabel(self, text='Дата:', font=FONT_LARGE).grid(row=0, column=0)
 
     def create_calendar(self):
         self.calendar = CTkDatePicker(self)
@@ -77,7 +74,7 @@ class AddTraining(ctk.CTkFrame):
         self.calendar.grid(row=0, column=1)
 
     def create_table(self):
-        self.table = CTkTable(self, row=2, font=('Russo One', 25), header_color = '#1f538d', values=[self.columns])
+        self.table = CTkTable(self, row=2, font=FONT_LARGE, header_color = '#1f538d', values=[self.columns])
         self.table.grid()
 
 
