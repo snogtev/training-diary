@@ -18,6 +18,7 @@ import customtkinter as ctk
 class CTkSpinbox(ctk.CTkFrame):
     def __init__(self,
                  master: any,
+                 unit: str = ' ',
                  width: int = 350,                            # width of the frame
                  height: int = 40,                            # height of the frame
                  start_value: float = 20,                        
@@ -65,26 +66,35 @@ class CTkSpinbox(ctk.CTkFrame):
         self.button_border_color = button_border_color
         self.state = state
         self.command = command
+        self.unit = unit
 
         # counter label 
 
         def validate_username(P):
-            return P.endswith(' кг')
+            x = P.replace(self.unit, '').strip()
+            
+            if x == '':
+                return True
+
+            try:
+                x = float(x)
+                return P.endswith(unit)
+
+            except:
+                return False
+            
         self.num = self.start_value
-        self.counter_var = str(self.num) + ' кг'
-        vcmd = (self.register(validate_username), "%P")
+        self.counter_var = str(self.num) + unit
+        vcmd = (self.register(validate_username), '%P')
         self.counter = ctk.CTkEntry(self,
-                                    font = self.font, validate="key", validatecommand=vcmd,
+                                    font = self.font, validate='key', validatecommand=vcmd,
                                     text_color = self.text_color)
         self.counter.insert(0, self.counter_var)
         self.counter.grid()
-        self.counter.bind('<ButtonRelease-1>', lambda e: 
-                          self.counter.icursor(len(self.counter.get()) - 3) 
-                          if self.counter.index("insert") > len(self.counter.get()) - 3 
-                          else None
-        )
-
-
+        self.counter.bind('<ButtonRelease-1>', lambda e:
+                          self.counter.icursor(len(self.counter.get()) - len(self.unit)) 
+                          if self.counter.index('insert') > len(self.counter.get()) - len(self.unit)
+                          else None)
 
 
         # decrement button
@@ -133,13 +143,13 @@ class CTkSpinbox(ctk.CTkFrame):
 
     def decrement_counter(self):
         '''Decrements the value of the counter by the step value.'''
-        self.num = float(self.counter.get()[:-3])
+        self.num = float(self.counter.get()[:-len(self.unit)])
         self.num = self.num - self.step_value
         self.update_counter()
 
     def increment_counter(self):
         '''Increments the value of the counter by the step value.'''
-        self.num = float(self.counter.get()[:-3])
+        self.num = float(self.counter.get()[:-len(self.unit)])
         self.num = self.num + self.step_value
         self.update_counter()
 
@@ -153,7 +163,7 @@ class CTkSpinbox(ctk.CTkFrame):
 
     def get(self):
         '''Returns the value of the counter.'''
-        return self.num
+        return self.counter.get()
     
     def set(self, value):
         '''Sets the counter to a particular value.'''
@@ -188,7 +198,7 @@ class CTkSpinbox(ctk.CTkFrame):
         if self.variable: self.variable = self.num
         if self.command: self.command(self.num)
         self.counter_var = f'{self.num} кг'
-        self.counter.delete(0, len(self.counter.get()) - 3)
+        self.counter.delete(0, len(self.counter.get()) - len(self.unit))
         self.counter.insert(0, self.num)
         
 
