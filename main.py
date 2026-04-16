@@ -4,6 +4,31 @@ from CTkDatePicker import CTkDatePicker
 from ctkspinbox import CTkSpinbox
 from CTkScrollableDropdown import *
 from CTkMessagebox import CTkMessagebox
+import sqlite3
+
+connection = sqlite3.connect('my_database.db')
+cursor = connection.cursor()
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS workouts (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+date TEXT
+)         
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS exercises (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+workout_id INTEGER,
+exercise TEXT,
+sets INTEGER,
+weight REAL,
+reps INTEGER,
+FOREIGN KEY (workout_id) REFERENCES workouts (id)
+)         
+''')
+
+connection.commit()
 
 ctk.FontManager.load_font('Russo One.ttf')
 
@@ -37,7 +62,6 @@ class MainMenu(ctk.CTkFrame):
         for i, btn_data in enumerate(self.buttons):
             ctk.CTkButton(self.tabview.tab('Тренировки'), **btn_data, font=FONT_LARGE).grid(row=i, pady=15, padx=50, sticky='ew')
 
-
 class AddTraining(ctk.CTkFrame):
     def __init__(self, master, navigate, **kwargs):
         super().__init__(master, **kwargs)
@@ -49,7 +73,7 @@ class AddTraining(ctk.CTkFrame):
         
         self.buttons = [{'text': 'Добавить упражнение', 'command': self.add_exercise},
                         {'text': 'Назад', 'command': self.hfdffhf},
-                        {'text': 'Сохранить', 'sticky': 's'}]
+                        {'text': 'Сохранить', 'command': self.save_training, 'sticky': 's'}]
         
         self.values = ('Жим лёжа', 'Присед', 'Становая тяга')
         
@@ -132,6 +156,20 @@ class AddTraining(ctk.CTkFrame):
         self.calendar.set_localization("ru_RU.UTF-8")
         self.calendar.grid(row=0, column=0, padx=150, pady=20, sticky='nw')
 
+    def save_training(self):
+        ffff = self.table.get()
+        ffffff = self.calendar.get_date()
+        print(ffff)
+        cursor.execute('INSERT INTO workouts (date) VALUES (?)', [ffffff])
+        current_workout_id = cursor.lastrowid
+        for i in range(len(ffff)):
+            ffff[i].insert(0, current_workout_id)
+
+        cursor.executemany('INSERT INTO exercises (workout_id, exercise, sets, weight, reps) VALUES (?, ?, ?, ?, ?)', ffff[1:])
+
+
+        connection.commit()
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -143,7 +181,7 @@ class App(ctk.CTk):
 
         self.frames = {'menu':MainMenu(self, navigate=self.new_frame),
                        'add': AddTraining(self, navigate=self.new_frame)}
-        
+                
         for frame in self.frames.values():
             frame.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
                        
