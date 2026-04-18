@@ -72,7 +72,8 @@ class AddTraining(ctk.CTkFrame):
         self.buttons = [{'text': 'Добавить упражнение', 'command': self.add_exercise},
                         {'text': 'Назад', 'command': self.go_back},
                         {'text': 'Сохранить', 'command': self.save_training, 'sticky': 's'}]
-        
+        self.training_form = None 
+        self.table = None
         self.values = ('Жим лёжа', 'Присед', 'Становая тяга')
         
         self.grid_columnconfigure(0, weight=1)
@@ -99,7 +100,7 @@ class AddTraining(ctk.CTkFrame):
             self.table = CTkTable(self, font=FONT_LARGE, header_color = '#1f538d', values=[self.columns])
             self.table_cheking = True
 
-        if not hasattr(self, 'training_form') or not self.training_form.winfo_exists():
+        if self.training_form is None or not self.training_form.winfo_exists():
             self.training_form = ctk.CTkToplevel()
             self.training_form.title('Упражнение')
             self.training_form.geometry('650x400')
@@ -144,7 +145,11 @@ class AddTraining(ctk.CTkFrame):
     def save_training(self):
         cursor.execute('SELECT id FROM workouts WHERE date = ?', [self.calendar.get_date()])
         result = cursor.fetchone()
-        if self.table.rows > 1 and result is None:
+        if self.table is None or not self.table.winfo_exists():
+            CTkMessagebox(self.training_form, title='Ошибка', message='Нельзя сохранить пустую тренировку!', icon='cancel', font=FONT_LARGE)
+        elif result is not None:
+            CTkMessagebox(title='Ошибка', message='Тренировка за данное число уже существует!', icon='cancel', font=FONT_LARGE)
+        else:
             ffff = self.table.get()
             ffffff = self.calendar.get_date()
             cursor.execute('INSERT INTO workouts (date) VALUES (?)', [ffffff])
@@ -153,9 +158,11 @@ class AddTraining(ctk.CTkFrame):
                 ffff[i].insert(0, current_workout_id)
             cursor.executemany('INSERT INTO exercises (workout_id, exercise, sets, weight, reps) VALUES (?, ?, ?, ?, ?)', ffff[1:])
             connection.commit()
+            msg = CTkMessagebox(message='Тренировка успешно добавлена!', title='Успех', icon='check', option_1='ОК', font=FONT_LARGE)
+            response = msg.get()
 
     def go_back(self):
-        if self.table.rows > 1:
+        if self.training_form is None or not self.training_form.winfo_exists():
             msg = CTkMessagebox(title='Выход', message='Сохранить тренировку?', icon='question', option_1='Отмена', option_2='Нет', option_3='Да', font=FONT_LARGE)
             response = msg.get()
             self.navigate('menu')
