@@ -65,7 +65,6 @@ class MainMenu(ctk.CTkFrame):
 class AddTraining(ctk.CTkFrame):
     def __init__(self, master, navigate, **kwargs):
         super().__init__(master, **kwargs)
-        self.table_cheking = None
         self.navigate = navigate
         self.columns = ('Упражнение', 'Вес', 'Подходы', 'Повторения')
         
@@ -96,9 +95,8 @@ class AddTraining(ctk.CTkFrame):
         self.calendar.grid(row=0, column=0, padx=150, pady=20, sticky='nw')
 
     def add_exercise(self):
-        if self.table_cheking is None:
+        if self.table is None:
             self.table = CTkTable(self, font=FONT_LARGE, header_color = '#1f538d', values=[self.columns])
-            self.table_cheking = True
 
         if self.training_form is None or not self.training_form.winfo_exists():
             self.training_form = ctk.CTkToplevel()
@@ -158,17 +156,21 @@ class AddTraining(ctk.CTkFrame):
                 ffff[i].insert(0, current_workout_id)
             cursor.executemany('INSERT INTO exercises (workout_id, exercise, sets, weight, reps) VALUES (?, ?, ?, ?, ?)', ffff[1:])
             connection.commit()
-            msg = CTkMessagebox(message='Тренировка успешно добавлена!', title='Успех', icon='check', option_1='ОК', font=FONT_LARGE)
-            response = msg.get()
-
+            CTkMessagebox(message='Тренировка успешно добавлена!', title='Успех', icon='check', option_1='ОК', font=FONT_LARGE)
+            self.table.destroy()
+            self.table = None
+            self.training_form = None
+            self.setup_ui()
+    
     def go_back(self):
-        if self.training_form is None or not self.training_form.winfo_exists():
+        if self.table is not None:
             msg = CTkMessagebox(title='Выход', message='Сохранить тренировку?', icon='question', option_1='Отмена', option_2='Нет', option_3='Да', font=FONT_LARGE)
             response = msg.get()
+            if response == 'Да':
+                self.save_training()
             self.navigate('menu')
-            self.table.delete_rows(range(1, self.table.rows))
-            self.table.grid_remove()
             self.dffg.grid()
+            self.table = None
         else:
             self.navigate('menu')
             
