@@ -65,14 +65,12 @@ class MainMenu(ctk.CTkFrame):
 class AddTraining(ctk.CTkFrame):
     def __init__(self, master, navigate, **kwargs):
         super().__init__(master, **kwargs)
-        self.training_form = None
-        self.tabling = None
-        self.row_counter = 1
+        self.table_cheking = None
         self.navigate = navigate
         self.columns = ('Упражнение', 'Вес', 'Подходы', 'Повторения')
         
         self.buttons = [{'text': 'Добавить упражнение', 'command': self.add_exercise},
-                        {'text': 'Назад', 'command': self.hfdffhf},
+                        {'text': 'Назад', 'command': self.go_back},
                         {'text': 'Сохранить', 'command': self.save_training, 'sticky': 's'}]
         
         self.values = ('Жим лёжа', 'Присед', 'Становая тяга')
@@ -81,25 +79,27 @@ class AddTraining(ctk.CTkFrame):
         self.grid_rowconfigure(3, weight=1) 
  
         self.setup_ui()
+    
+    def setup_ui(self):
+        for i, btn_data in enumerate(self.buttons, start=2):
+            fjnf = btn_data.copy()
+            jfjf = fjnf.pop('sticky', 'n')
+            ctk.CTkButton(self, **fjnf, font=FONT_LARGE).grid(row=i, column=0, sticky=jfjf, pady=15, padx=50)
+        ctk.CTkLabel(self, text='Дата:', font=FONT_LARGE).grid(row=0, column=0, padx=25, pady=20, sticky='nw')
+        self.dffg = ctk.CTkLabel(self, text='Упражнений ещё нет!', font=HUGE_FONT)
+        self.dffg.grid(row=1, column=0, sticky='new')
 
-    def hfdffhf(self):
-        if self.row_counter > 1:
-            msg = CTkMessagebox(title='Выход', message='Сохранить тренировку?', icon='question', option_1='Отмена', option_2='Нет', option_3='Да', font=FONT_LARGE)
-            response = msg.get()
-            self.navigate('menu')
-            self.table.delete_rows(range(1, self.row_counter))
-            self.table.grid_remove()
-            self.dffg.grid()
-            self.row_counter = 1
-        else:
-            self.navigate('menu')
+
+        self.calendar = CTkDatePicker(self)
+        self.calendar.set_localization('ru_RU.UTF-8')
+        self.calendar.grid(row=0, column=0, padx=150, pady=20, sticky='nw')
 
     def add_exercise(self):
-        if self.tabling is None:
+        if self.table_cheking is None:
             self.table = CTkTable(self, font=FONT_LARGE, header_color = '#1f538d', values=[self.columns])
-            self.tabling = True
+            self.table_cheking = True
 
-        if self.training_form is None:
+        if not hasattr(self, 'training_form') or not self.training_form.winfo_exists():
             self.training_form = ctk.CTkToplevel()
             self.training_form.title('Упражнение')
             self.training_form.geometry('650x400')
@@ -112,9 +112,9 @@ class AddTraining(ctk.CTkFrame):
             self.optionmenu = ctk.CTkComboBox(self.training_form, font=FONT_LARGE, width=300)
             self.optionmenu.grid(row=0, column=0, sticky='nw', padx=250)
             self.training_form.after(1, self.optionmenu.focus)
-            self.fij = ctk.CTkButton(self.training_form, text='Ещё', command=lambda: self.add_new_exercise(save=False), font=FONT_LARGE)
+            self.fij = ctk.CTkButton(self.training_form, text='Ещё', command=lambda: self.add_next_exercise(save=False), font=FONT_LARGE)
             self.fij.grid(pady=100, padx=250, sticky='sw')
-            self.fiefj = ctk.CTkButton(self.training_form, text='Завершить', command=lambda: self.add_new_exercise(save=True), font=FONT_LARGE)
+            self.fiefj = ctk.CTkButton(self.training_form, text='Завершить', command=lambda: self.add_next_exercise(save=True), font=FONT_LARGE)
             self.fiefj.grid(row=4, column=0, sticky='nw', padx=25)
 
             def insert_method(e):
@@ -125,16 +125,15 @@ class AddTraining(ctk.CTkFrame):
             for i, buttons in enumerate(self.columns):
                 ctk.CTkLabel(self.training_form, text=buttons + ':', font=FONT_LARGE).grid(row=i, column=0, sticky='nw', padx=25)
 
-    def add_new_exercise(self, save):
+    def add_next_exercise(self, save):
         if self.optionmenu.get() == '':
             CTkMessagebox(self.training_form, title='Ошибка', message='Введите название упражнения!', icon='cancel', font=FONT_LARGE)
             return
-        self.table.add_row(index=self.row_counter, values='')
-        self.table.insert(row=self.row_counter, column=0, value=self.optionmenu.get())
-        self.table.insert(row=self.row_counter, column=1, value=self.spinbox.get())
-        self.table.insert(row=self.row_counter, column=2, value=self.spinbox2.get())
-        self.table.insert(row=self.row_counter, column=3, value=self.spinbox3.get())
-        self.row_counter += 1
+        self.table.add_row(index=self.table.rows, values='')
+        self.table.insert(row=self.table.rows-1, column=0, value=self.optionmenu.get())
+        self.table.insert(row=self.table.rows-1, column=1, value=self.spinbox.get())
+        self.table.insert(row=self.table.rows-1, column=2, value=self.spinbox2.get())
+        self.table.insert(row=self.table.rows-1, column=3, value=self.spinbox3.get())
         self.training_form.destroy() 
         self.training_form = None
         self.dffg.grid_remove()
@@ -142,35 +141,31 @@ class AddTraining(ctk.CTkFrame):
         if save == False:
             self.add_exercise()
 
-    def setup_ui(self):
-        for i, btn_data in enumerate(self.buttons, start=2):
-            fjnf = btn_data.copy()
-            jfjf = fjnf.pop('sticky', 'n')
-            ctk.CTkButton(self, **fjnf, font=FONT_LARGE).grid(row=i, column=0, sticky=jfjf, pady=15, padx=50)
-        ctk.CTkLabel(self, text='Дата:', font=FONT_LARGE).grid(row=0, column=0, padx=25, pady=20, sticky='nw')
-        self.dffg = ctk.CTkLabel(self, text='Упражнений ещё нет!', font=HUGE_FONT)
-        self.dffg.grid(row=1, column=0, sticky='new')
-
-
-        self.calendar = CTkDatePicker(self)
-        self.calendar.set_localization("ru_RU.UTF-8")
-        self.calendar.grid(row=0, column=0, padx=150, pady=20, sticky='nw')
-
     def save_training(self):
-        ffff = self.table.get()
-        ffffff = self.calendar.get_date()
-        print(ffff)
-        cursor.execute('INSERT INTO workouts (date) VALUES (?)', [ffffff])
-        current_workout_id = cursor.lastrowid
-        for i in range(len(ffff)):
-            ffff[i].insert(0, current_workout_id)
+        cursor.execute('SELECT id FROM workouts WHERE date = ?', [self.calendar.get_date()])
+        result = cursor.fetchone()
+        if self.table.rows > 1 and result is None:
+            ffff = self.table.get()
+            ffffff = self.calendar.get_date()
+            cursor.execute('INSERT INTO workouts (date) VALUES (?)', [ffffff])
+            current_workout_id = cursor.lastrowid
+            for i in range(len(ffff)):
+                ffff[i].insert(0, current_workout_id)
+            cursor.executemany('INSERT INTO exercises (workout_id, exercise, sets, weight, reps) VALUES (?, ?, ?, ?, ?)', ffff[1:])
+            connection.commit()
 
-        cursor.executemany('INSERT INTO exercises (workout_id, exercise, sets, weight, reps) VALUES (?, ?, ?, ?, ?)', ffff[1:])
-
-
-        connection.commit()
-
-
+    def go_back(self):
+        if self.table.rows > 1:
+            msg = CTkMessagebox(title='Выход', message='Сохранить тренировку?', icon='question', option_1='Отмена', option_2='Нет', option_3='Да', font=FONT_LARGE)
+            response = msg.get()
+            self.navigate('menu')
+            self.table.delete_rows(range(1, self.table.rows))
+            self.table.grid_remove()
+            self.dffg.grid()
+        else:
+            self.navigate('menu')
+            
+        
 class App(ctk.CTk):
     def __init__(self):
         
@@ -183,7 +178,7 @@ class App(ctk.CTk):
                        'add': AddTraining(self, navigate=self.new_frame)}
                 
         for frame in self.frames.values():
-            frame.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+            frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
                        
         self.new_frame('menu')
 
