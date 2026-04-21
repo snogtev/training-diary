@@ -117,7 +117,7 @@ class CTkDatePicker(ctk.CTkFrame):
     "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
 ]
-        month_label = ctk.CTkLabel(self.calendar_frame, font=('Russo One', 20), text=f"{self.month_names[self.current_month].capitalize()}, {self.current_year}")
+        month_label = ctk.CTkLabel(self.calendar_frame, font=('Russo One', 20), text=f"{self.month_names[self.current_month - 1].capitalize()}, {self.current_year}")
         month_label.grid(row=0, column=1, columnspan=5)
 
         if self.allow_change_month:

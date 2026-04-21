@@ -5,6 +5,7 @@ from ctkspinbox import CTkSpinbox
 from CTkScrollableDropdown import *
 from CTkMessagebox import CTkMessagebox
 import sqlite3
+from CTkXYFrame import CTkXYFrame
 
 connection = sqlite3.connect('my_database.db')
 cursor = connection.cursor()
@@ -48,10 +49,10 @@ class MainMenu(ctk.CTkFrame):
         self.tabs = ('Тренировки', 'Статистика', 'Профиль', 'Настройки', 'Помощь')
         
         self.buttons = [{'text': 'Добавить тренировку', 'command': lambda: navigate('add')},
-                        {'text': 'Мои тренировки'},
+                        {'text': 'Мои тренировки', 'command': lambda: navigate('view')},
                         {'text': 'Мои цели'}]
         
-        self.tabview = ctk.CTkTabview(self, width=700, height=550)
+        self.tabview = ctk.CTkTabview(self, width=1160, height=700)
         self.tabview.grid(row=0, column=0, padx=20, pady=20)
         
         for tab in self.tabs:
@@ -76,30 +77,33 @@ class AddTraining(ctk.CTkFrame):
         self.values = ('Жим лёжа', 'Присед', 'Становая тяга')
         
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(3, weight=1) 
+        self.grid_rowconfigure(2, weight=1) 
  
         self.setup_ui()
     
     def setup_ui(self):
-        for i, btn_data in enumerate(self.buttons, start=2):
+        for i, btn_data in enumerate(self.buttons, start=3):
             fjnf = btn_data.copy()
             jfjf = fjnf.pop('sticky', 'n')
             ctk.CTkButton(self, **fjnf, font=FONT_LARGE).grid(row=i, column=0, sticky=jfjf, pady=15, padx=50)
         ctk.CTkLabel(self, text='Дата:', font=FONT_LARGE).grid(row=0, column=0, padx=25, pady=20, sticky='nw')
         self.dffg = ctk.CTkLabel(self, text='Упражнений ещё нет!', font=HUGE_FONT)
-        self.dffg.grid(row=1, column=0, sticky='new')
-
-
+        self.dffg.grid(row=1, column=0)
+        self.xy_frame = CTkXYFrame(self, height=200, width=1000, fg_color = "#2B2B2B")
         self.calendar = CTkDatePicker(self)
         self.calendar.set_localization('ru_RU.UTF-8')
-        self.calendar.grid(row=0, column=0, padx=150, pady=20, sticky='nw')
+        self.calendar.grid(row=0, column=0, pady=20, padx=150, sticky='nw')
 
     def add_exercise(self):
         if self.table is None:
-            self.table = CTkTable(self, font=FONT_LARGE, header_color = '#1f538d', values=[self.columns])
-
+            self.xy_frame.grid(row=2, column=0, sticky="ew")
+            self.xy_frame.grid_columnconfigure(0, weight=1)
+            self.table = CTkTable(self.xy_frame,font=FONT_LARGE, header_color = '#1f538d', values=[self.columns])
+            self.table.grid(row=0, column=0)
+            
         if self.training_form is None or not self.training_form.winfo_exists():
             self.training_form = ctk.CTkToplevel()
+            self.training_form .resizable(False, False)
             self.training_form.title('Упражнение')
             self.training_form.geometry('650x400')
             self.spinbox = CTkSpinbox(self.training_form, unit=' ' + UNIT, step_value=WEIGHT_STEP, font=FONT_LARGE)
@@ -136,7 +140,6 @@ class AddTraining(ctk.CTkFrame):
         self.training_form.destroy() 
         self.training_form = None
         self.dffg.grid_remove()
-        self.table.grid(row=2)
         if save == False:
             self.add_exercise()
 
@@ -168,12 +171,45 @@ class AddTraining(ctk.CTkFrame):
             response = msg.get()
             if response == 'Да':
                 self.save_training()
+            self.table.destroy()
+            self.table = None
+            self.training_form = None
             self.navigate('menu')
             self.dffg.grid()
             self.table = None
         else:
             self.navigate('menu')
-            
+
+class MyTrainings(ctk.CTkFrame):
+    def __init__(self, master, navigate, **kwargs):
+        super().__init__(master, **kwargs)
+        self.navigate = navigate
+        self.columns = ('Упражнение', 'Вес', 'Подходы', 'Повторения')
+        
+        self.buttons = [{'text': 'Добавить упраfmsdkfжнение'},
+                        {'text': 'Назад', 'command': self.go_back},
+                        {'text': 'Сохранить'}]
+        self.training_form = None 
+        self.table = None
+        self.values = ('Жим лёжа', 'Присед', 'Становая тяга')
+        
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(3, weight=1) 
+ 
+        self.setup_ui()
+    
+    def setup_ui(self):
+        for i, btn_data in enumerate(self.buttons, start=3):
+            fjnf = btn_data.copy()
+            jfjf = fjnf.pop('sticky', 'n')
+            ctk.CTkButton(self, **fjnf, font=FONT_LARGE).grid(row=i, column=0, sticky=jfjf, pady=15, padx=50)
+        ctk.CTkLabel(self, text='Дата:', font=FONT_LARGE).grid(row=0, column=0, padx=25, pady=20, sticky='nw')
+        self.dffg = ctk.CTkLabel(self, text='Упражнений ещё нет!', font=HUGE_FONT)
+        self.dffg.grid(row=1, column=0, sticky='new')
+
+    def go_back(self):
+        self.navigate('menu')
+
         
 class App(ctk.CTk):
     def __init__(self):
@@ -184,7 +220,8 @@ class App(ctk.CTk):
 
 
         self.frames = {'menu':MainMenu(self, navigate=self.new_frame),
-                       'add': AddTraining(self, navigate=self.new_frame)}
+                       'add': AddTraining(self, navigate=self.new_frame),
+                       'view': MyTrainings(self, navigate=self.new_frame)}
                 
         for frame in self.frames.values():
             frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
@@ -196,7 +233,7 @@ class App(ctk.CTk):
 
 app = App()
 app.title('Дневник тренировок')
-app.geometry('800x600')
+app.geometry('1160x700')
 ctk.set_appearance_mode('Dark')
 app.resizable(False, False)
 app.mainloop()
