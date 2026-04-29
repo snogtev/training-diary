@@ -42,7 +42,6 @@ class CTkXYFrame(customtkinter.CTkFrame):
         self.xy_canvas.grid(row=0, column=0, sticky="nsew", padx=(7,0), pady=(7,0))
         
         self.bind("<Configure>", lambda event, canvas=self.xy_canvas: self.onFrameConfigure(canvas))
-        self.xy_canvas.bind("<Configure>", lambda e: self.xy_canvas.itemconfig(self.window_id, width=e.width))
         self.xy_canvas.bind_all("<MouseWheel>", lambda e: self._on_mousewheel(e.delta, e.widget), add="+")
         self.xy_canvas.bind_all("<Shift-MouseWheel>", lambda e: self._on_mousewheel_shift(e.delta, e.widget), add="+")
         self.xy_canvas.bind_all("<Button-4>", lambda e: self._on_mousewheel(120, e.widget), add="+")
@@ -91,7 +90,6 @@ class CTkXYFrame(customtkinter.CTkFrame):
         
     def onFrameConfigure(self, canvas):
         canvas.configure(scrollregion=canvas.bbox("all"))
-        canvas.itemconfig(self.window_id, width=canvas.winfo_width())
         
     def _on_mousewheel(self, event, widget):
         if self.check_if_master_is_canvas(widget):

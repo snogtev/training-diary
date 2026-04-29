@@ -95,6 +95,7 @@ class CTkSpinbox(ctk.CTkFrame):
                           self.counter.icursor(len(self.counter.get()) - len(self.unit)) 
                           if self.counter.index('insert') > len(self.counter.get()) - len(self.unit)
                           else None)
+        
 
 
         # decrement button
@@ -163,7 +164,8 @@ class CTkSpinbox(ctk.CTkFrame):
 
     def get(self):
         '''Returns the value of the counter.'''
-        return self.counter.get()
+        db_counter = self.counter.get()[:-len(self.unit)]
+        return db_counter
     
     def set(self, value):
         '''Sets the counter to a particular value.'''

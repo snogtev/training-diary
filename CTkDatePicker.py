@@ -74,8 +74,9 @@ class CTkDatePicker(ctk.CTkFrame):
 
         self.popup.after(500, lambda: self.popup.focus())
 
-        self.current_year = datetime.now().year
-        self.current_month = datetime.now().month
+        self.user_date = datetime.strptime(self.date_entry.get(), '%d.%m.%Y')
+        self.current_year = self.user_date.year
+        self.current_month = self.user_date.month
         self.build_calendar()
 
     def build_calendar(self):
@@ -212,7 +213,8 @@ class CTkDatePicker(ctk.CTkFrame):
         - str: The date string in the format specified by self.date_format.
         """
 
-        return self.date_entry.get()
+        db_date = datetime.strptime(self.date_entry.get(), self.date_format)
+        return db_date
 
     def set_allow_manual_input(self, value):
         """
