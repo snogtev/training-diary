@@ -27,6 +27,7 @@ TEXT_ABOUT = (
 
 TABLE_HEADERS = ('Упражнение', 'Вес', 'Подходы', 'Повторения')
 EXERCISE_LIST = ('Жим лёжа', 'Присед', 'Становая тяга')
+DAYS_OF_THE_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 
 BLACK_COLOR = '#242424'
 BLUE_COLOR = '#1f538d'
@@ -46,7 +47,8 @@ cursor = connection.cursor()
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS workouts (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
-date TEXT
+date TEXT,
+is_draft INTEGER
 )         
 ''')
 
@@ -65,9 +67,10 @@ FOREIGN KEY (workout_id) REFERENCES workouts (id)
 connection.commit()
 
 class AddTraining(ctk.CTkFrame):
-    def __init__(self, master, history_page, **kwargs):
+    def __init__(self, master, history_page, drafts_page, **kwargs):
         super().__init__(master, fg_color=BLACK_COLOR, **kwargs)
         self.history_page = history_page
+        self.drafts_page = drafts_page
         
         self.window_training_form = None 
         self.table = None
@@ -86,18 +89,27 @@ class AddTraining(ctk.CTkFrame):
         self.calendar.grid(row=0, column=1, pady=20, sticky='w')
 
         self.label_no_exercises = ctk.CTkLabel(self, text='Упражнений ещё нет!', font=HUGE_FONT)
-        self.label_no_exercises.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        self.label_no_exercises.grid(row=1, column=0, columnspan=4, sticky='nsew')
         self.table_frame = CTkXYFrame(self, height=500, width=800, fg_color=BLACK_COLOR)
 
         self.button_add = ctk.CTkButton(self, text='Добавить упражнение', command=self.add_exercise, font=FONT_LARGE)
-        self.button_add.grid(row=2, column=0, pady=15, padx=50, columnspan=2, sticky='nsew')
+        self.button_add.grid(row=2, column=0, pady=15, padx=50, columnspan=4, sticky='nsew')
 
-        self.button_save = ctk.CTkButton(self, text='Сохранить', command=self.save_training, font=FONT_LARGE)
-        self.button_save.grid(row=3, column=0, pady=15, padx=50, columnspan=2, sticky='nsew')
+        self.button_save = ctk.CTkButton(self, text='Сохранить', command=self.save_to_db, font=FONT_LARGE)
+        self.button_save.grid(row=3, column=0, columnspan=2, pady=15, padx=50, sticky='ew')
+
+        self.button_save = ctk.CTkButton(self, text='Сохранить как черновик', command=self.save_as_draft, font=FONT_LARGE)
+        self.button_save.grid(row=3, column=3, pady=15, padx=50, sticky='ew')
+
+    def save_to_db(self):
+        self.save_training(is_draft=0)
+
+    def save_as_draft(self):
+        self.save_training(is_draft=1)
 
     def add_exercise(self):
         if self.table is None:
-            self.table_frame.grid(row=1, column=0, columnspan=2, sticky='nsew')
+            self.table_frame.grid(row=1, column=0, columnspan=4, sticky='nsew')
             self.table = CTkTable(self.table_frame,font=FONT_LARGE, header_color=BLUE_COLOR, values=[TABLE_HEADERS])
             self.table.grid()
             
@@ -155,7 +167,7 @@ class AddTraining(ctk.CTkFrame):
         if save == False:
             self.add_exercise()
 
-    def save_training(self):
+    def save_training(self, is_draft):
         cursor.execute('SELECT id FROM workouts WHERE date = ?', [self.calendar.get_date()])
         result = cursor.fetchone()
         if self.table is None or not self.table.winfo_exists():
@@ -165,7 +177,7 @@ class AddTraining(ctk.CTkFrame):
         else:
             table_data = self.table.get()
             calendar_data = self.calendar.get_date()
-            cursor.execute('INSERT INTO workouts (date) VALUES (?)', [calendar_data])
+            cursor.execute('INSERT INTO workouts (date, is_draft) VALUES (?, ?)', [calendar_data, is_draft])
             current_workout_id = cursor.lastrowid
             for i in range(len(table_data)):
                 table_data[i].insert(0, current_workout_id)
@@ -176,7 +188,8 @@ class AddTraining(ctk.CTkFrame):
         self.table_frame.grid_remove()
         self.table = None
         self.window_training_form = None
-        self.history_page.setup_ui() 
+        self.history_page.setup_ui()
+        self.drafts_page.setup_ui() 
         self.setup_ui()
     
     def go_back(self):
@@ -200,21 +213,21 @@ class MyTrainings(ctk.CTkFrame):
     def __init__(self, master,  **kwargs):
         super().__init__(master, fg_color="transparent", **kwargs)
 
-        self.date = ''
-
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1) 
+        self.date = None
+        self.table_frame = None
+        self.is_draft = 0
+        self.not_yet = 'Тренировок'
+        self.counter = 1
 
         self.setup_ui()
-    
+
     def setup_ui(self):
+            self.grid_columnconfigure(0, weight=1)
+            self.grid_rowconfigure(0, weight=1)
             for widget in self.winfo_children():
                 widget.destroy()
-            self.table_frame = CTkXYFrame(self, height=600, fg_color=BLACK_COLOR, width=800)
 
-            self.table_frame.grid(row=0)
-
-            cursor.execute('''SELECT
+            cursor.execute(f'''SELECT
                            strftime('%d.%m.%Y', date),
                            exercise,
                            weight,
@@ -223,27 +236,47 @@ class MyTrainings(ctk.CTkFrame):
                            FROM workouts
                            JOIN exercises
                            ON workouts.id = workout_id
+                           WHERE is_draft = {self.is_draft}
                            ORDER BY date DESC
                            ''')
             rows = cursor.fetchall()
             
             if rows:
+                if self.table_frame is None or not self.table_frame.winfo_exists():
+                    self.table_frame = CTkXYFrame(self, height=600, fg_color=BLACK_COLOR, width=800)
+                    self.table_frame.grid()
+                    self.table_frame.grid_columnconfigure(0, weight=1)
+                    self.table_frame.grid_columnconfigure(0, weight=1)
                 for i in range (len(rows)):
                     if rows[i][0] != self.date:
-                        days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"]
                         self.date = rows[i][0]
-                        sedate_object = datetime.strptime(self.date, "%d.%m.%Y").date()
+                        sedate_object = datetime.strptime(self.date, '%d.%m.%Y').date()
                         counter = 1
                         self.training_frame = ctk.CTkFrame(self.table_frame, fg_color=BLUE_COLOR, corner_radius=15)
                         self.training_frame.grid(pady=15, ipady=10, ipadx=10)
                         self.training_frame.grid_columnconfigure(0, weight=1)
                         self.label_date = ctk.CTkLabel(self.training_frame, text=f'Дата: {rows[i][0]}', font=FONT_LARGE)
                         self.label_date.pack(pady=15)
-                        self.label_date = ctk.CTkLabel(self.training_frame, text=f'{days[sedate_object.weekday()]}', font=FONT_LARGE)
+                        self.label_date = ctk.CTkLabel(self.training_frame, text=f'{DAYS_OF_THE_WEEK[sedate_object.weekday()]}', font=FONT_LARGE)
                         self.label_date.pack()
-                    self.label_exercises = ctk.CTkLabel(self.training_frame, text=f'{counter}) {" x ".join(map(str, rows[i][1:]))}', font=FONT_LARGE)
+                    self.label_exercises = ctk.CTkLabel(self.training_frame, text=f'{counter}) {' x '.join(map(str, rows[i][1:]))}', font=FONT_LARGE)
                     self.label_exercises.pack(padx=20, anchor='w')
                     counter += 1
+            else:
+                self.label_no_trainings = ctk.CTkLabel(self, text=f'{self.not_yet} ещё нет!', font=HUGE_FONT)
+                self.label_no_trainings.grid()
+
+class Drafts(MyTrainings):
+    def __init__(self, master,  **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.date = None
+        self.table_frame = None
+        self.is_draft = 1
+        self.not_yet = 'Черновиков'
+        self.counter = 1
+    
+        self.setup_ui()
 
 class About(ctk.CTkFrame):
     def __init__(self, master,  **kwargs):
@@ -285,6 +318,7 @@ class App(ctk.CTk):
 
         side.add_item(id='add', text='Добавить')
         side.add_item(id='history', text='История')
+        side.add_item(id='drafts', text='Черновики')
         side.add_item(id='info', text='Справка')
 
         history_container = self.nav.view('history')
@@ -293,17 +327,23 @@ class App(ctk.CTk):
         self.add_trainindg_page = MyTrainings(history_container)
         self.add_trainindg_page.grid(row=0, column=0, sticky='nsew')
 
+        drarts_container = self.nav.view('drafts')
+        drarts_container.grid_columnconfigure(0, weight=1)
+        drarts_container.grid_rowconfigure(0, weight=1)
+        self.add_trainindg_page = Drafts(drarts_container)
+        self.add_trainindg_page.grid(row=0, column=0, sticky='nsew')
+
         add_container = self.nav.view('add')
         add_container.grid_columnconfigure(0, weight=1)
         add_container.grid_rowconfigure(0, weight=1)
-        self.add_training_page = AddTraining(add_container, history_page=self.add_trainindg_page)
+        self.add_training_page = AddTraining(add_container, history_page=self.add_trainindg_page, drafts_page=self.add_trainindg_page)
         self.add_training_page.grid(row=0, column=0, sticky='nsew')
 
         info_container = self.nav.view('info')
         info_container.grid_columnconfigure(0, weight=1)
         info_container.grid_rowconfigure(0, weight=1)
-        self.add_trainindg_page = About(info_container)
-        self.add_trainindg_page.grid(row=0, column=0, sticky='nsew')
+        self.add_trainindgd_page = About(info_container)
+        self.add_trainindgd_page.grid(row=0, column=0, sticky='nsew')
 
         self.nav.set('add')
 
