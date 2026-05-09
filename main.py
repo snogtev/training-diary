@@ -25,14 +25,15 @@ TEXT_ABOUT = (
         'Проект имеет открытый исходный код и доступен в репозитории на '
         )
 
-TABLE_HEADERS = ('Упражнение', 'Вес', 'Подходы', 'Повторения')
+TABLE_HEADERS = ('№', 'Упражнение', 'Вес', 'Подходы', 'Повторения', '', '')
+FORM_HEADERS = ('Упражнение', 'Вес', 'Подходы', 'Повторения')
 EXERCISE_LIST = ('Жим лёжа', 'Присед', 'Становая тяга')
 DAYS_OF_THE_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 
 BLACK_COLOR = '#242424'
 BLUE_COLOR = '#1f538d'
 
-HUGE_FONT = (FONT_FAMILY, 35)
+HUGE_FONT = (FONT_FAMILY, 45)
 FONT_LARGE = (FONT_FAMILY, 25)
 FONT_MEDIUM = (FONT_FAMILY, 22)
 FONT_SMALL = (FONT_FAMILY, 18)
@@ -92,27 +93,16 @@ class AddTraining(ctk.CTkFrame):
         self.label_no_exercises.grid(row=1, column=0, columnspan=4, sticky='nsew')
         self.table_frame = CTkXYFrame(self, height=500, width=800, fg_color=BLACK_COLOR)
 
-        self.button_add = ctk.CTkButton(self, text='Добавить упражнение', command=self.add_exercise, font=FONT_LARGE)
-        self.button_add.grid(row=2, column=0, pady=15, padx=50, columnspan=4, sticky='nsew')
+        self.button_add = ctk.CTkButton(self, text='Добавить упражнение', corner_radius=15, height=45, command=self.open_exercise_entry_form, font=FONT_LARGE)
+        self.button_add.grid(row=2, column=0, pady=15, padx=25, columnspan=4, sticky='nsew')
 
-        self.button_save = ctk.CTkButton(self, text='Сохранить', command=self.save_to_db, font=FONT_LARGE)
-        self.button_save.grid(row=3, column=0, columnspan=2, pady=15, padx=50, sticky='ew')
+        self.button_save = ctk.CTkButton(self, text='Сохранить', corner_radius=15, height=45, command=self.save_to_db, font=FONT_LARGE)
+        self.button_save.grid(row=3, column=0, columnspan=2, pady=15, padx=25, sticky='ew')
 
-        self.button_save = ctk.CTkButton(self, text='Сохранить как черновик', command=self.save_as_draft, font=FONT_LARGE)
-        self.button_save.grid(row=3, column=3, pady=15, padx=50, sticky='ew')
+        self.button_save = ctk.CTkButton(self, text='Сохранить как черновик', corner_radius=15, height=45, command=self.save_as_draft, font=FONT_LARGE)
+        self.button_save.grid(row=3, column=3, pady=15, padx=25, sticky='ew')
 
-    def save_to_db(self):
-        self.save_training(is_draft=0)
-
-    def save_as_draft(self):
-        self.save_training(is_draft=1)
-
-    def add_exercise(self):
-        if self.table is None:
-            self.table_frame.grid(row=1, column=0, columnspan=4, sticky='nsew')
-            self.table = CTkTable(self.table_frame,font=FONT_LARGE, header_color=BLUE_COLOR, values=[TABLE_HEADERS])
-            self.table.grid()
-            
+    def open_exercise_entry_form(self):
         if self.window_training_form is None or not self.window_training_form.winfo_exists():
             self.window_training_form = ctk.CTkToplevel()
             self.window_training_form .resizable(False, False)
@@ -133,8 +123,8 @@ class AddTraining(ctk.CTkFrame):
 
             self.optionmenu = ctk.CTkComboBox(self.window_training_form, font=FONT_LARGE, width=300)
             self.window_training_form.after(1, self.optionmenu.focus)
-            self.button_more = ctk.CTkButton(self.window_training_form, text='Ещё', command=lambda: self.add_next_exercise(save=False), font=FONT_LARGE)
-            self.button_done = ctk.CTkButton(self.window_training_form, text='Завершить', command=lambda: self.add_next_exercise(save=True), font=FONT_LARGE)
+            self.button_more = ctk.CTkButton(self.window_training_form, text='Ещё', corner_radius=15, command=lambda: self.sumbit_exercise(save=False), font=FONT_LARGE)
+            self.button_done = ctk.CTkButton(self.window_training_form, text='Завершить', corner_radius=15,  command=lambda: self.sumbit_exercise(save=True, data=None), font=FONT_LARGE)
 
             self.optionmenu.grid(row=0, column=1, pady=5, sticky='w')
             self.button_more.grid(row=5, column=0, columnspan=2, pady=5, padx=25, sticky='nsew')
@@ -145,10 +135,71 @@ class AddTraining(ctk.CTkFrame):
             CTkScrollableDropdown(self.optionmenu, values=EXERCISE_LIST, font=FONT_MEDIUM, command=lambda _: insert_method(_), autocomplete=True)
             self.optionmenu.set('')
             self.window_training_form.wm_attributes('-topmost', 1)
-            for i, buttons in enumerate(TABLE_HEADERS):
+            for i, buttons in enumerate(FORM_HEADERS):
+                ctk.CTkLabel(self.window_training_form, text=buttons + ':', font=FONT_LARGE).grid(row=i, column=0, sticky='w', padx=25)
+    
+    def open_exercise_edit_form(self, data):
+        def clean_num(val):
+            f_val = float(val)
+            return int(f_val) if f_val == int(f_val) else f_val
+    
+        if self.window_training_form is None or not self.window_training_form.winfo_exists():
+            self.window_training_form = ctk.CTkToplevel()
+            self.window_training_form .resizable(False, False)
+            self.window_training_form.title('Упражнение')
+            self.window_training_form.geometry('650x275')
+
+            self.window_training_form.grid_columnconfigure(0, weight=0)
+            self.window_training_form.grid_columnconfigure(1, weight=1)
+            self.window_training_form.grid_rowconfigure(4, weight=1)
+
+            self.spinbox_weight = CTkSpinbox(self.window_training_form, unit=' ' + UNIT, start_value=clean_num(self.table.get(data['row'])[1][2]), step_value=WEIGHT_STEP, font=FONT_LARGE)
+            self.spinbox_sets = CTkSpinbox(self.window_training_form, start_value=clean_num(self.table.get(data['row'])[1][3]), font=FONT_LARGE)
+            self.spinbox_reps = CTkSpinbox(self.window_training_form,  start_value=clean_num(self.table.get(data['row'])[1][4]), font=FONT_LARGE)
+
+            self.spinbox_weight.grid(row=1, column=1, pady=5, sticky='w')
+            self.spinbox_sets.grid(row=2, column=1, pady=5, sticky='w')
+            self.spinbox_reps.grid(row=3, column=1, pady=5, sticky='w')
+
+            self.optionmenu = ctk.CTkComboBox(self.window_training_form, font=FONT_LARGE, width=300)
+            self.window_training_form.after(1, self.optionmenu.focus)
+            self.button_more = ctk.CTkButton(self.window_training_form, text='Готово', corner_radius=15, command=lambda: self.sumbit_exercise(True, data), font=FONT_LARGE)
+
+            self.optionmenu.grid(row=0, column=1, pady=5, sticky='w')
+            self.button_more.grid(row=5, column=0, columnspan=2, pady=5, padx=25, sticky='nsew')
+
+            def insert_method(e):
+                self.optionmenu.set(e)
+            CTkScrollableDropdown(self.optionmenu, values=EXERCISE_LIST, font=FONT_MEDIUM, command=lambda _: insert_method(_), autocomplete=True)
+            self.optionmenu.set(self.table.get(data['row'])[1][1])
+            self.window_training_form.wm_attributes('-topmost', 1)
+            for i, buttons in enumerate(FORM_HEADERS):
                 ctk.CTkLabel(self.window_training_form, text=buttons + ':', font=FONT_LARGE).grid(row=i, column=0, sticky='w', padx=25)
 
-    def add_next_exercise(self, save):
+
+    def create_table(self):
+        if self.table is None:
+            self.table_frame.grid(row=1, column=0, columnspan=5, sticky='nsew')
+            self.table = CTkTable(self.table_frame,font=FONT_LARGE, header_color=BLUE_COLOR, width=40, values=[TABLE_HEADERS], command=self.manage_exercises)
+            column_widths = [40, 200, 100, 100, 80, 40, 40]
+            for index, width in enumerate(column_widths):
+                self.table.edit_column(index, width=width)
+            self.table.grid()
+
+    def manage_exercises(self, data):
+        if data['column'] == 5 and data['row'] != 0:
+            self.open_exercise_edit_form(data)
+        elif data['column'] == 6 and data['row'] != 0: 
+            self.table.delete_row(data['row'])
+            for i in range(1, len(self.table.get())):
+                self.table.insert(i, 0, i)
+
+        for r in range(len(self.table.get())):
+            self.table.edit(r, 5, fg_color='transparent', corner_radius=0)
+            self.table.edit(r, 6, fg_color='transparent', corner_radius=0)
+
+    def sumbit_exercise(self, save, data=None):
+        self.create_table()
         self.errors = {'название упражнения': self.optionmenu.get(),
                   'вес': self.spinbox_weight.get().replace(' ', ''),
                   'количество подходов': self.spinbox_sets.get().replace(' ', ''),
@@ -158,14 +209,33 @@ class AddTraining(ctk.CTkFrame):
             if value == '':
                 CTkMessagebox(self.window_training_form, title='Ошибка', message=f'Введите {key}!', icon='cancel', font=FONT_LARGE)
                 return
-            
-        self.columns = [self.optionmenu.get().strip(), self.spinbox_weight.get().strip(), self.spinbox_sets.get().strip(), self.spinbox_reps.get().strip()]
+        if data == None:
+            self.add_exercise_row(save)
+        else:
+            self.edit_exercise_row(data)
+
+    def edit_exercise_row(self, data):
+        self.columns = [data['row'], self.optionmenu.get().strip(), self.spinbox_weight.get().strip(), self.spinbox_sets.get().strip(), self.spinbox_reps.get().strip(), 'E', 'D']
+        for col_index, value in enumerate(self.columns):
+            self.table.insert(data['row'], col_index, value)
+        for r in range(len(self.table.get())):
+            self.table.edit(r, 5, fg_color='transparent', corner_radius=0)
+            self.table.edit(r, 6, fg_color='transparent', corner_radius=0)
+        self.window_training_form.destroy() 
+        self.window_training_form = None
+        self.label_no_exercises.grid_remove()
+
+    def add_exercise_row(self, save):
+        self.columns = [len(self.table.get()), self.optionmenu.get().strip(), self.spinbox_weight.get().strip(), self.spinbox_sets.get().strip(), self.spinbox_reps.get().strip(), 'E', 'D']
         self.table.add_row(values=self.columns)
+        for r in range(len(self.table.get())):
+            self.table.edit(r, 5, fg_color='transparent', corner_radius=0)
+            self.table.edit(r, 6, fg_color='transparent', corner_radius=0)
         self.window_training_form.destroy() 
         self.window_training_form = None
         self.label_no_exercises.grid_remove()
         if save == False:
-            self.add_exercise()
+            self.open_exercise_entry_form()
 
     def save_training(self, is_draft):
         cursor.execute('SELECT id FROM workouts WHERE date = ?', [self.calendar.get_date()])
@@ -177,11 +247,14 @@ class AddTraining(ctk.CTkFrame):
         else:
             table_data = self.table.get()
             calendar_data = self.calendar.get_date()
+            new_data = []
             cursor.execute('INSERT INTO workouts (date, is_draft) VALUES (?, ?)', [calendar_data, is_draft])
             current_workout_id = cursor.lastrowid
-            for i in range(len(table_data)):
-                table_data[i].insert(0, current_workout_id)
-            cursor.executemany('INSERT INTO exercises (workout_id, exercise, weight, sets, reps) VALUES (?, ?, ?, ?, ?)', table_data[1:])
+            for row in table_data:
+                trimmed_row = row[1:5]
+                trimmed_row.insert(0, current_workout_id)
+                new_data.append(trimmed_row)
+            cursor.executemany('INSERT INTO exercises (workout_id, exercise, weight, sets, reps) VALUES (?, ?, ?, ?, ?)',  new_data[1:])
             connection.commit()
             CTkMessagebox(message='Тренировка успешно добавлена!', title='Успех', icon='check', option_1='ОК', font=FONT_LARGE)
         self.table.grid_remove()
@@ -191,6 +264,12 @@ class AddTraining(ctk.CTkFrame):
         self.history_page.setup_ui()
         self.drafts_page.setup_ui() 
         self.setup_ui()
+
+    def save_to_db(self):
+        self.save_training(is_draft=0)
+
+    def save_as_draft(self):
+        self.save_training(is_draft=1)
     
     def go_back(self):
         if self.table is not None:
@@ -227,6 +306,7 @@ class MyTrainings(ctk.CTkFrame):
             for widget in self.winfo_children():
                 widget.destroy()
 
+
             cursor.execute(f'''SELECT
                            strftime('%d.%m.%Y', date),
                            exercise,
@@ -243,8 +323,8 @@ class MyTrainings(ctk.CTkFrame):
             
             if rows:
                 if self.table_frame is None or not self.table_frame.winfo_exists():
-                    self.table_frame = CTkXYFrame(self, height=600, fg_color=BLACK_COLOR, width=800)
-                    self.table_frame.grid()
+                    self.table_frame = CTkXYFrame(self, height=1000, fg_color=BLACK_COLOR, width=800)
+                    self.table_frame.grid(sticky="nsew")
                     self.table_frame.grid_columnconfigure(0, weight=1)
                     self.table_frame.grid_columnconfigure(0, weight=1)
                 for i in range (len(rows)):
@@ -253,14 +333,14 @@ class MyTrainings(ctk.CTkFrame):
                         sedate_object = datetime.strptime(self.date, '%d.%m.%Y').date()
                         counter = 1
                         self.training_frame = ctk.CTkFrame(self.table_frame, fg_color=BLUE_COLOR, corner_radius=15)
-                        self.training_frame.grid(pady=15, ipady=10, ipadx=10)
+                        self.training_frame.grid(pady=15, ipady=10, ipadx=10, sticky='ew')
                         self.training_frame.grid_columnconfigure(0, weight=1)
                         self.label_date = ctk.CTkLabel(self.training_frame, text=f'Дата: {rows[i][0]}', font=FONT_LARGE)
-                        self.label_date.pack(pady=15)
+                        self.label_date.grid(pady=15)
                         self.label_date = ctk.CTkLabel(self.training_frame, text=f'{DAYS_OF_THE_WEEK[sedate_object.weekday()]}', font=FONT_LARGE)
-                        self.label_date.pack()
+                        self.label_date.grid()
                     self.label_exercises = ctk.CTkLabel(self.training_frame, text=f'{counter}) {' x '.join(map(str, rows[i][1:]))}', font=FONT_LARGE)
-                    self.label_exercises.pack(padx=20, anchor='w')
+                    self.label_exercises.grid(padx=20)
                     counter += 1
             else:
                 self.label_no_trainings = ctk.CTkLabel(self, text=f'{self.not_yet} ещё нет!', font=HUGE_FONT)
@@ -324,8 +404,8 @@ class App(ctk.CTk):
         history_container = self.nav.view('history')
         history_container.grid_columnconfigure(0, weight=1)
         history_container.grid_rowconfigure(0, weight=1)
-        self.add_trainindg_page = MyTrainings(history_container)
-        self.add_trainindg_page.grid(row=0, column=0, sticky='nsew')
+        self.add_trainindeg_page = MyTrainings(history_container)
+        self.add_trainindeg_page.grid(row=0, column=0, sticky='nsew')
 
         drarts_container = self.nav.view('drafts')
         drarts_container.grid_columnconfigure(0, weight=1)
@@ -336,7 +416,7 @@ class App(ctk.CTk):
         add_container = self.nav.view('add')
         add_container.grid_columnconfigure(0, weight=1)
         add_container.grid_rowconfigure(0, weight=1)
-        self.add_training_page = AddTraining(add_container, history_page=self.add_trainindg_page, drafts_page=self.add_trainindg_page)
+        self.add_training_page = AddTraining(add_container, history_page=self.add_trainindeg_page, drafts_page=self.add_trainindg_page)
         self.add_training_page.grid(row=0, column=0, sticky='nsew')
 
         info_container = self.nav.view('info')

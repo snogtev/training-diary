@@ -28,7 +28,7 @@ class CTkXYFrame(customtkinter.CTkFrame):
         
         customtkinter.CTkFrame.__init__(self, master=self.xy_canvas, fg_color=self.parent_frame.cget("fg_color"),
                                         bg_color=self.parent_frame.cget("fg_color"))
-        self.window_id = self.xy_canvas.create_window((width/2, 0), window=self, anchor="n")
+        self.window_id = self.xy_canvas.create_window((width/2, height/2), window=self, anchor="center")
         
         self.vsb = customtkinter.CTkScrollbar(self.parent_frame, orientation="vertical", command=self.xy_canvas.yview,
                                               fg_color=scrollbar_fg_color, button_color=scrollbar_button_color,
@@ -90,6 +90,14 @@ class CTkXYFrame(customtkinter.CTkFrame):
         
     def onFrameConfigure(self, canvas):
         canvas.configure(scrollregion=canvas.bbox("all"))
+        
+        # Считаем координаты центра холста
+        x = max(canvas.winfo_width() / 2, self.winfo_reqwidth() / 2)
+        y = max(canvas.winfo_height() / 2, self.winfo_reqheight() / 2)
+        
+        # Перемещаем таблицу в этот центр
+        canvas.coords(self.window_id, x, y)
+
         
     def _on_mousewheel(self, event, widget):
         if self.check_if_master_is_canvas(widget):

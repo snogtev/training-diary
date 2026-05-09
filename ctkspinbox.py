@@ -170,6 +170,7 @@ class CTkSpinbox(ctk.CTkFrame):
     def set(self, value):
         '''Sets the counter to a particular value.'''
         self.num = (max(min(value, self.max_value), self.min_value))
+        
     
     def disable(self):
         '''Disables the functionality of the counter.'''
