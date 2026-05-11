@@ -1,4 +1,12 @@
-.venv/
-.db/
-*.db
+# Python
 __pycache__/
+*.pyc
+.venv/
+venv/
+
+# Database
+trainings.db
+
+# IDE
+.vscode/
+.idea/
