@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from CTkMessagebox import CTkMessagebox
-from CTkTable import CTkTable
+from libs.CTkTable import CTkTable
 from libs.CTkDatePicker import CTkDatePicker
 from libs.CTkScrollableDropdown import CTkScrollableDropdown
 from libs.ctkspinbox import CTkSpinbox
@@ -72,7 +72,7 @@ class AddTraining(ctk.CTkFrame):
             self.spinbox_sets.grid(row=2, column=1, pady=5, sticky='w')
             self.spinbox_reps.grid(row=3, column=1, pady=5, sticky='w')
 
-            self.optionmenu = ctk.CTkComboBox(self.window_training_form, font=FONT_LARGE, width=300)
+            self.optionmenu = ctk.CTkComboBox(self.window_training_form, font=FONT_LARGE, width=350)
             self.optionmenu.set('')
             self.window_training_form.after(1, self.optionmenu.focus)
 
@@ -90,7 +90,7 @@ class AddTraining(ctk.CTkFrame):
             def insert_method(e):
                 self.optionmenu.set(e)
 
-            CTkScrollableDropdown(self.optionmenu, values=EXERCISE_LIST, font=FONT_MEDIUM,
+            CTkScrollableDropdown(self.optionmenu, values=EXERCISE_LIST, font=FONT_SMALL,
                                   command=lambda _: insert_method(_), autocomplete=True)
             self.optionmenu.set('')
 
@@ -350,5 +350,4 @@ class AddTraining(ctk.CTkFrame):
         self.table_frame.grid_remove()
         self.table = None
         self.window_training_form = None
-        self.history_page.setup_ui()
         self.setup_ui()
