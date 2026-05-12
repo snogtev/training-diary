@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from ctksidebar import CTkSidebarNavigation
+from libs.ctksidebar import CTkSidebarNavigation
 
 from constants import *
 from gui import About, AddTraining, MyTrainings

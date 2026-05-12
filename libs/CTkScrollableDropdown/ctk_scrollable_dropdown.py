@@ -60,6 +60,8 @@ class CTkScrollableDropdown(customtkinter.CTkToplevel):
         self.button_color = customtkinter.ThemeManager.theme["CTkFrame"]["top_fg_color"] if button_color is None else button_color
         self.text_color = customtkinter.ThemeManager.theme["CTkLabel"]["text_color"] if text_color is None else text_color
         self.hover_color = customtkinter.ThemeManager.theme["CTkButton"]["hover_color"] if hover_color is None else hover_color
+
+        self.font = button_kwargs.get("font")
         
         
         if scrollbar is False:
@@ -278,7 +280,7 @@ class CTkScrollableDropdown(customtkinter.CTkToplevel):
             self.button_num = len(self.values)
             for key in self.widgets.keys():
                 self.widgets[key].destroy()
-            self._init_buttons()
+            self._init_buttons(font=self.font)
             self.place_dropdown()
             
         self.frame._parent_canvas.yview_moveto(0.0)

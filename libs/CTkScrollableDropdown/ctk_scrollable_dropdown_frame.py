@@ -103,6 +103,7 @@ class CTkScrollableDropdownFrame(customtkinter.CTkFrame):
         
         if self.autocomplete:
             self.bind_autocomplete()
+            
 
     def _destroy(self):
         self.after(500, self.destroy_popup)
