@@ -51,5 +51,3 @@
 pip install -r requirements.txt
 python main.py
 ```
-
-Распространяется под лицензией MIT. Подробнее см. в файле [LICENSE](LICENSE).
